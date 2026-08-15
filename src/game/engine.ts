@@ -1,6 +1,16 @@
-import type { GameCallbacks, GameStatus } from '@/interfaces/game'
-import { BALL_BASE_SPEED, GAME_HEIGHT, GAME_WIDTH, PADDLE_SPEED } from './constants'
+import type { Brick, GameCallbacks, GameStatus } from '@/interfaces/game'
+import {
+  BALL_BASE_SPEED,
+  BALL_LEVEL_SPEED_BONUS,
+  BALL_MAX_SPEED,
+  GAME_HEIGHT,
+  GAME_WIDTH,
+  PADDLE_SPEED,
+  START_LIVES,
+} from './constants'
 import { bounceOffPaddle, createBall, launchBall } from './ball'
+import { countAliveBricks, createBricks } from './bricks'
+import { resolveBallBrick } from './collision'
 import { createPaddle, movePaddle, setPaddleX } from './paddle'
 
 const MAX_FRAME_DT = 1 / 30
@@ -14,6 +24,10 @@ export class ArkanoidGame {
 
   private paddle = createPaddle()
   private ball = createBall(GAME_WIDTH / 2, GAME_HEIGHT - 80)
+  private bricks: Brick[] = []
+  private score = 0
+  private lives = START_LIVES
+  private level = 1
   private keys = { left: false, right: false }
 
   private rafId = 0
@@ -43,9 +57,18 @@ export class ArkanoidGame {
   start(): void {
     if (this.running) return
     this.running = true
+    this.resetGame()
     this.setStatus('ready')
     this.lastTime = performance.now()
     this.rafId = requestAnimationFrame(this.loop)
+  }
+
+  private resetGame(): void {
+    this.score = 0
+    this.lives = START_LIVES
+    this.level = 1
+    this.bricks = createBricks()
+    this.emitHud()
   }
 
   destroy(): void {
@@ -87,6 +110,7 @@ export class ArkanoidGame {
 
     this.collideWalls()
     this.collidePaddle()
+    this.collideBricks()
   }
 
   private collideWalls(): void {
@@ -105,7 +129,7 @@ export class ArkanoidGame {
     }
 
     if (ball.position.y - ball.radius > GAME_HEIGHT) {
-      this.resetBallToPaddle()
+      this.loseLife()
     }
   }
 
@@ -125,8 +149,59 @@ export class ArkanoidGame {
     }
   }
 
-  private resetBallToPaddle(): void {
+  private collideBricks(): void {
+    const ball = this.ball
+    for (const brick of this.bricks) {
+      if (!brick.alive) continue
+      const axis = resolveBallBrick(ball, brick)
+      if (!axis) continue
+
+      const fromLeft = ball.position.x < brick.x + brick.width / 2
+      const fromTop = ball.position.y < brick.y + brick.height / 2
+
+      if (axis === 'x') {
+        ball.velocity.x = fromLeft ? -Math.abs(ball.velocity.x) : Math.abs(ball.velocity.x)
+        ball.position.x = fromLeft ? brick.x - ball.radius : brick.x + brick.width + ball.radius
+      } else {
+        ball.velocity.y = fromTop ? -Math.abs(ball.velocity.y) : Math.abs(ball.velocity.y)
+        ball.position.y = fromTop ? brick.y - ball.radius : brick.y + brick.height + ball.radius
+      }
+
+      this.damageBrick(brick)
+      break // one brick per frame keeps the physics stable
+    }
+  }
+
+  private damageBrick(brick: Brick): void {
+    brick.hitsLeft -= 1
+    if (brick.hitsLeft > 0) return
+
+    brick.alive = false
+    this.score += brick.points
+    this.emitHud()
+
+    if (countAliveBricks(this.bricks) === 0) this.setStatus('levelcomplete')
+  }
+
+  private loseLife(): void {
+    this.lives -= 1
+    this.emitHud()
+    this.setStatus(this.lives <= 0 ? 'gameover' : 'ready')
+  }
+
+  private nextLevel(): void {
+    this.level += 1
+    this.bricks = createBricks()
+    this.emitHud()
     this.setStatus('ready')
+  }
+
+  private ballSpeed(): number {
+    return Math.min(BALL_BASE_SPEED + (this.level - 1) * BALL_LEVEL_SPEED_BONUS, BALL_MAX_SPEED)
+  }
+
+  private emitHud(): void {
+    this.callbacks.onHud({ score: this.score, lives: this.lives, level: this.level })
   }
 
   private setStatus(status: GameStatus): void {
@@ -137,8 +212,13 @@ export class ArkanoidGame {
   private action(): void {
     if (this.status === 'idle') this.start()
     else if (this.status === 'ready') {
-      launchBall(this.ball, BALL_BASE_SPEED)
+      launchBall(this.ball, this.ballSpeed())
       this.setStatus('playing')
+    } else if (this.status === 'gameover') {
+      this.resetGame()
+      this.setStatus('ready')
+    } else if (this.status === 'levelcomplete') {
+      this.nextLevel()
     }
   }
 
@@ -187,8 +267,26 @@ export class ArkanoidGame {
     ctx.fillStyle = '#0b1020'
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT)
 
+    this.renderBricks()
     this.renderPaddle()
     this.renderBall()
+  }
+
+  private renderBricks(): void {
+    for (const brick of this.bricks) {
+      if (!brick.alive) continue
+
+      this.ctx.fillStyle = brick.color
+      roundRect(this.ctx, brick.x, brick.y, brick.width, brick.height, 4)
+      this.ctx.fill()
+
+      if (brick.hitsLeft < brick.maxHits) {
+        const damage = 1 - brick.hitsLeft / brick.maxHits
+        this.ctx.fillStyle = `rgba(0, 0, 0, ${0.3 * damage})`
+        roundRect(this.ctx, brick.x, brick.y, brick.width, brick.height, 4)
+        this.ctx.fill()
+      }
+    }
   }
 
   private renderPaddle(): void {
