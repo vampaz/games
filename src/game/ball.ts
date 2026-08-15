@@ -10,7 +10,7 @@ export function createBall(x: number, y: number): Ball {
 }
 
 export function launchBall(ball: Ball, speed: number): void {
-  const angle = -Math.PI / 2 + (Math.random() * 0.5 - 0.25)
+  const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.5
   ball.velocity.x = Math.cos(angle) * speed
   ball.velocity.y = Math.sin(angle) * speed
 }
