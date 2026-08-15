@@ -1,4 +1,4 @@
-import type { Brick, GameCallbacks, GameStatus } from '@/interfaces/game'
+import type { Brick, GameCallbacks, GameStatus, Vec2 } from '@/interfaces/game'
 import {
   BALL_BASE_SPEED,
   BALL_LEVEL_SPEED_BONUS,
@@ -25,6 +25,7 @@ export class ArkanoidGame {
   private paddle = createPaddle()
   private ball = createBall(GAME_WIDTH / 2, GAME_HEIGHT - 80)
   private bricks: Brick[] = []
+  private trail: Vec2[] = []
   private score = 0
   private lives = START_LIVES
   private level = 1
@@ -52,15 +53,27 @@ export class ArkanoidGame {
     canvas.addEventListener('touchstart', this.handleTouchStart, { passive: false })
     window.addEventListener('keydown', this.handleKeyDown)
     window.addEventListener('keyup', this.handleKeyUp)
-  }
 
-  start(): void {
-    if (this.running) return
+    this.bricks = createBricks()
     this.running = true
-    this.resetGame()
-    this.setStatus('ready')
     this.lastTime = performance.now()
     this.rafId = requestAnimationFrame(this.loop)
+  }
+
+  /** Context-dependent primary input (space / click / button). */
+  primaryAction(): void {
+    if (this.status === 'idle') {
+      this.resetGame()
+      this.setStatus('ready')
+    } else if (this.status === 'ready') {
+      launchBall(this.ball, this.ballSpeed())
+      this.setStatus('playing')
+    } else if (this.status === 'gameover') {
+      this.resetGame()
+      this.setStatus('ready')
+    } else if (this.status === 'levelcomplete') {
+      this.nextLevel()
+    }
   }
 
   private resetGame(): void {
@@ -107,6 +120,9 @@ export class ArkanoidGame {
     const ball = this.ball
     ball.position.x += ball.velocity.x * dt
     ball.position.y += ball.velocity.y * dt
+
+    this.trail.push({ x: ball.position.x, y: ball.position.y })
+    if (this.trail.length > 10) this.trail.shift()
 
     this.collideWalls()
     this.collidePaddle()
@@ -206,20 +222,8 @@ export class ArkanoidGame {
 
   private setStatus(status: GameStatus): void {
     this.status = status
+    if (status !== 'playing') this.trail = []
     this.callbacks.onStatus(status)
-  }
-
-  private action(): void {
-    if (this.status === 'idle') this.start()
-    else if (this.status === 'ready') {
-      launchBall(this.ball, this.ballSpeed())
-      this.setStatus('playing')
-    } else if (this.status === 'gameover') {
-      this.resetGame()
-      this.setStatus('ready')
-    } else if (this.status === 'levelcomplete') {
-      this.nextLevel()
-    }
   }
 
   private pointerToGameX(clientX: number): number {
@@ -238,14 +242,14 @@ export class ArkanoidGame {
   }
 
   private handleClick = (): void => {
-    this.action()
+    this.primaryAction()
   }
 
   private handleTouchStart = (event: TouchEvent): void => {
     event.preventDefault()
     const touch = event.touches[0]
     if (touch) setPaddleX(this.paddle, this.pointerToGameX(touch.clientX))
-    this.action()
+    this.primaryAction()
   }
 
   private handleKeyDown = (event: KeyboardEvent): void => {
@@ -253,7 +257,7 @@ export class ArkanoidGame {
     if (event.code === 'ArrowRight' || event.code === 'KeyD') this.keys.right = true
     if (event.code === 'Space' || event.code === 'Enter') {
       event.preventDefault()
-      this.action()
+      this.primaryAction()
     }
   }
 
@@ -267,9 +271,35 @@ export class ArkanoidGame {
     ctx.fillStyle = '#0b1020'
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT)
 
+    this.renderGrid()
     this.renderBricks()
+    this.renderTrail()
     this.renderPaddle()
     this.renderBall()
+  }
+
+  private renderGrid(): void {
+    const ctx = this.ctx
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.05)'
+    ctx.lineWidth = 1
+    for (let y = 40; y < GAME_HEIGHT; y += 40) {
+      ctx.beginPath()
+      ctx.moveTo(0, y + 0.5)
+      ctx.lineTo(GAME_WIDTH, y + 0.5)
+      ctx.stroke()
+    }
+  }
+
+  private renderTrail(): void {
+    const ctx = this.ctx
+    for (let i = 0; i < this.trail.length; i++) {
+      const point = this.trail[i]
+      const t = (i + 1) / this.trail.length
+      ctx.fillStyle = `rgba(248, 250, 252, ${0.16 * t})`
+      ctx.beginPath()
+      ctx.arc(point.x, point.y, this.ball.radius * (0.4 + 0.6 * t), 0, Math.PI * 2)
+      ctx.fill()
+    }
   }
 
   private renderBricks(): void {
@@ -279,6 +309,10 @@ export class ArkanoidGame {
       this.ctx.fillStyle = brick.color
       roundRect(this.ctx, brick.x, brick.y, brick.width, brick.height, 4)
       this.ctx.fill()
+
+      this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)'
+      this.ctx.lineWidth = 1
+      this.ctx.stroke()
 
       if (brick.hitsLeft < brick.maxHits) {
         const damage = 1 - brick.hitsLeft / brick.maxHits
@@ -291,17 +325,27 @@ export class ArkanoidGame {
 
   private renderPaddle(): void {
     const { x, y, width, height } = this.paddle
-    this.ctx.fillStyle = '#e2e8f0'
-    roundRect(this.ctx, x - width / 2, y - height / 2, width, height, height / 2)
-    this.ctx.fill()
+    const ctx = this.ctx
+    ctx.save()
+    ctx.shadowColor = 'rgba(226, 232, 240, 0.45)'
+    ctx.shadowBlur = 14
+    ctx.fillStyle = '#e2e8f0'
+    roundRect(ctx, x - width / 2, y - height / 2, width, height, height / 2)
+    ctx.fill()
+    ctx.restore()
   }
 
   private renderBall(): void {
     const { x, y } = this.ball.position
-    this.ctx.fillStyle = '#f8fafc'
-    this.ctx.beginPath()
-    this.ctx.arc(x, y, this.ball.radius, 0, Math.PI * 2)
-    this.ctx.fill()
+    const ctx = this.ctx
+    ctx.save()
+    ctx.shadowColor = 'rgba(248, 250, 252, 0.6)'
+    ctx.shadowBlur = 12
+    ctx.fillStyle = '#f8fafc'
+    ctx.beginPath()
+    ctx.arc(x, y, this.ball.radius, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
   }
 }
 

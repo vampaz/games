@@ -19,13 +19,16 @@ onMounted(() => {
       status.value = next
     },
   })
-  game.start()
 })
 
 onBeforeUnmount(() => {
   game?.destroy()
   game = null
 })
+
+function handlePrimaryAction(): void {
+  game?.primaryAction()
+}
 </script>
 
 <template>
@@ -41,7 +44,7 @@ onBeforeUnmount(() => {
       </div>
       <div class="hud-item">
         <span class="hud-label">Lives</span>
-        <span class="hud-value lives" aria-label="{{ hud.lives }} lives remaining">
+        <span class="hud-value lives" :aria-label="`${hud.lives} lives remaining`">
           <i v-for="life in hud.lives" :key="life" class="life-dot"></i>
         </span>
       </div>
@@ -49,6 +52,28 @@ onBeforeUnmount(() => {
 
     <div class="stage">
       <canvas ref="canvasRef" aria-label="Arkanoid game area"></canvas>
+
+      <div
+        v-if="status === 'idle' || status === 'gameover' || status === 'levelcomplete'"
+        class="overlay"
+      >
+        <template v-if="status === 'idle'">
+          <h1 class="title">ARKANOID</h1>
+          <p class="subtitle">Clear the wall. Don't drop the ball.</p>
+        </template>
+        <template v-else-if="status === 'gameover'">
+          <h1 class="title danger">GAME OVER</h1>
+          <p class="subtitle">Final score {{ hud.score }}</p>
+        </template>
+        <template v-else>
+          <h1 class="title">LEVEL {{ hud.level }} CLEARED</h1>
+          <p class="subtitle">Score {{ hud.score }}</p>
+        </template>
+
+        <button type="button" class="cta" @click="handlePrimaryAction">
+          {{ status === 'idle' ? 'Start game' : status === 'gameover' ? 'Play again' : 'Next level' }}
+        </button>
+      </div>
     </div>
 
     <p v-if="status === 'ready'" class="hint">
@@ -106,13 +131,6 @@ onBeforeUnmount(() => {
   position: relative;
 }
 
-.hint {
-  margin: 12px 4px 0;
-  text-align: center;
-  font-size: 0.85rem;
-  color: #64748b;
-}
-
 canvas {
   display: block;
   width: 100%;
@@ -120,5 +138,61 @@ canvas {
   border-radius: 12px;
   box-shadow: 0 24px 60px rgb(0 0 0 / 0.5);
   touch-action: none;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  border-radius: 12px;
+  background: rgb(7 10 22 / 0.78);
+  backdrop-filter: blur(6px);
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-shadow: 0 0 32px rgb(148 163 184 / 0.5);
+}
+
+.title.danger {
+  color: #f87171;
+  text-shadow: 0 0 32px rgb(248 113 113 / 0.4);
+}
+
+.subtitle {
+  margin: 0;
+  color: #94a3b8;
+}
+
+.cta {
+  margin-top: 14px;
+  padding: 10px 30px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0b1020;
+  background: #f8fafc;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.cta:hover {
+  background: #e2e8f0;
+}
+
+.hint {
+  margin: 12px 4px 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #64748b;
 }
 </style>
