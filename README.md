@@ -5,6 +5,7 @@ A collection of small browser games built with Vue 3, TypeScript and Vite. The h
 ## Games
 
 - **Arkanoid** (`/arkanoid`) — Classic brick breaker. The game runs on an HTML canvas; Vue handles the HUD and state overlays.
+- **Pong** (`/pong`) — The 1972 arcade original: black field, white blocks, dashed center line, first to eleven.
 
 ### Arkanoid gameplay
 
@@ -20,6 +21,23 @@ A collection of small browser games built with Vue 3, TypeScript and Vite. The h
 | Mouse / touch drag | Move paddle |
 | Arrow keys or A/D | Move paddle |
 | Space / Enter / click | Start, launch ball, continue |
+
+### Pong gameplay
+
+- First to eleven points wins; the ball resets to center and serves toward the side that just lost
+- The ball speeds up a little with every paddle hit (and resets to normal speed on each serve), like the original
+- Where the ball strikes the paddle steers its angle: center hits fly flat, edge hits leave steep
+- You play the left paddle against the machine; the original beeps play on every hit and point
+- A pause key is the only modern addition
+
+### Pong controls
+
+| Input | Action |
+| --- | --- |
+| W / S or ↑ / ↓ | Move paddle |
+| Mouse / touch drag | Move paddle |
+| Space / Enter / click | Start, continue |
+| P / Escape | Pause |
 
 ## Adding a game
 

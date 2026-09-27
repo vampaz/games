@@ -7,4 +7,10 @@ export const games: GameEntry[] = [
     tagline: "Clear the wall. Don't drop the ball.",
     load: () => import('@/games/arkanoid/ArkanoidView.vue'),
   },
+  {
+    id: 'pong',
+    name: 'Pong',
+    tagline: 'Two paddles. First to eleven.',
+    load: () => import('@/games/pong/PongView.vue'),
+  },
 ]
