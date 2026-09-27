@@ -5,7 +5,8 @@ Classic Arkanoid built with Vue 3, TypeScript and Vite. The game runs on an HTML
 ## Gameplay
 
 - Clear all bricks to advance to the next level (the ball gets faster each level)
-- Top rows are tougher (2–3 hits) and worth more points
+- 14 hand-crafted level layouts, repeating after 14
+- Brick color encodes durability and value: white 1 hit / 10 pts, red 2 / 20, blue 3 / 40, green 2 / 60, yellow 2 / 80, purple 4 / 100
 - 3 lives — drop the ball and you lose one
 
 ## Controls

@@ -15,7 +15,6 @@ export const BALL_MAX_SPEED = 620
 export const MAX_BOUNCE_ANGLE = Math.PI / 3
 
 export const BRICK_COLS = 10
-export const BRICK_ROWS = 7
 export const BRICK_GAP = 6
 export const BRICK_TOP = 70
 export const BRICK_SIDE_MARGIN = 24

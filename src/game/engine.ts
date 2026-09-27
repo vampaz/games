@@ -54,7 +54,7 @@ export class ArkanoidGame {
     window.addEventListener('keydown', this.handleKeyDown)
     window.addEventListener('keyup', this.handleKeyUp)
 
-    this.bricks = createBricks()
+    this.bricks = createBricks(this.level)
     this.running = true
     this.lastTime = performance.now()
     this.rafId = requestAnimationFrame(this.loop)
@@ -80,7 +80,7 @@ export class ArkanoidGame {
     this.score = 0
     this.lives = START_LIVES
     this.level = 1
-    this.bricks = createBricks()
+    this.bricks = createBricks(this.level)
     this.emitHud()
   }
 
@@ -207,7 +207,7 @@ export class ArkanoidGame {
 
   private nextLevel(): void {
     this.level += 1
-    this.bricks = createBricks()
+    this.bricks = createBricks(this.level)
     this.emitHud()
     this.setStatus('ready')
   }
