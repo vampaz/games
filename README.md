@@ -5,6 +5,7 @@ A collection of small browser games built with Vue 3, TypeScript and Vite. The h
 ## Games
 
 - **Arkanoid** (`/arkanoid`) — Classic brick breaker. The game runs on an HTML canvas; Vue handles the HUD and state overlays.
+- **Tetris** (`/tetris`) — A faithful remake of the 1989 NES Tetris: its gravity table, scoring, rotation and DAS, plus a ghost piece and next preview for playability.
 
 ### Arkanoid gameplay
 
@@ -20,6 +21,27 @@ A collection of small browser games built with Vue 3, TypeScript and Vite. The h
 | Mouse / touch drag | Move paddle |
 | Arrow keys or A/D | Move paddle |
 | Space / Enter / click | Start, launch ball, continue |
+
+### Tetris gameplay
+
+- Faithful to the 1989 NES release: the ROM gravity table (level 1 at 800ms per row down to 16.7ms), NES scoring and the GET READY screen between levels
+- The 7-bag randomizer deals fair, evenly distributed pieces
+- NES scoring: 40 / 100 / 300 / 1200 points per 1 / 2 / 3 / 4 lines, × level; soft dropping awards 1 point per row
+- Every 10 cleared lines raises the level; game over when a newly spawned piece cannot fit
+- NES rotation (NRS): clockwise only, no wall kicks, no hard drop; held keys use the original DAS (16-frame delay, 6-frame repeat)
+- A landed piece keeps a short extension (ARE, 10–18 frames) in which it can still move and rotate before it locks
+- A ghost piece, next-piece preview and pause are the only modern additions
+
+### Tetris controls
+
+| Input | Action |
+| --- | --- |
+| Arrow keys or A/D | Move (original DAS auto-repeat) |
+| Down / S | Soft drop (2× gravity, 1 pt/row) |
+| Up / W / X | Rotate clockwise |
+| Space / Enter | Start, resume, restart |
+| P / Escape | Pause |
+| Tap / swipe | Rotate / move (touch) |
 
 ## Adding a game
 
@@ -63,4 +85,8 @@ src/
       ArkanoidView.vue    HUD, canvas mount and state overlays
       game/               engine, ball, paddle, bricks and collision logic (pure TS)
       interfaces/         Arkanoid-specific interfaces
+    tetris/
+      TetrisView.vue      HUD panel, canvas mount and state overlays
+      game/               engine, board, pieces, 7-bag and scoring logic (pure TS)
+      interfaces/         Tetris-specific interfaces
 ```
