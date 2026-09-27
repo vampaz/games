@@ -31,32 +31,61 @@ describe('resolveBallBrick', () => {
     expect(resolveBallBrick(makeBall(300, 300), makeBrick())).toBeNull()
   })
 
-  it("resolves 'x' for a hit from the left", () => {
+  it('reflects left for a ball on the left face', () => {
     const ball = makeBall(94, 110)
     ball.velocity.x = 200
-    expect(resolveBallBrick(ball, makeBrick())).toBe('x')
+
+    const hit = resolveBallBrick(ball, makeBrick())
+
+    expect(hit?.axis).toBe('x')
+    expect(hit?.signX).toBe(-1)
   })
 
-  it("resolves 'x' for a hit from the right", () => {
+  it('reflects right for a ball on the right face', () => {
     const ball = makeBall(166, 110)
     ball.velocity.x = -200
-    expect(resolveBallBrick(ball, makeBrick())).toBe('x')
+
+    const hit = resolveBallBrick(ball, makeBrick())
+
+    expect(hit?.axis).toBe('x')
+    expect(hit?.signX).toBe(1)
   })
 
-  it("resolves 'y' for a hit from the top", () => {
-    const ball = makeBall(130, 94)
-    expect(resolveBallBrick(ball, makeBrick())).toBe('y')
+  it('reflects up for a ball above the brick', () => {
+    const hit = resolveBallBrick(makeBall(130, 94), makeBrick())
+
+    expect(hit?.axis).toBe('y')
+    expect(hit?.signY).toBe(-1)
   })
 
-  it("resolves 'y' for a hit from the bottom", () => {
+  it('reflects down for a ball below the brick', () => {
     const ball = makeBall(130, 126)
     ball.velocity.y = -200
-    expect(resolveBallBrick(ball, makeBrick())).toBe('y')
+
+    const hit = resolveBallBrick(ball, makeBrick())
+
+    expect(hit?.axis).toBe('y')
+    expect(hit?.signY).toBe(1)
+  })
+
+  it('reflects away from a corner along the dominant normal', () => {
+    const ball = makeBall(95, 95)
+    ball.velocity.x = 200
+
+    const hit = resolveBallBrick(ball, makeBrick())
+
+    // Closest point is the top-left corner: |dx| === |dy|, resolve to y
+    expect(hit?.axis).toBe('y')
+    expect(hit?.signY).toBe(-1)
   })
 
   it('falls back to the movement axis when the center is inside the brick', () => {
     const ball = makeBall(130, 110)
     ball.velocity.x = 200
-    expect(resolveBallBrick(ball, makeBrick())).toBe('x')
+
+    const hit = resolveBallBrick(ball, makeBrick())
+
+    expect(hit?.axis).toBe('x')
+    expect(hit?.signX).toBe(-1)
   })
 })

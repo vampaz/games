@@ -1,36 +1,3 @@
-<script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
-import type { GameStatus, HudState } from '@/games/arkanoid/interfaces/game'
-import { ArkanoidGame } from '@/games/arkanoid/game/engine'
-
-const canvasRef = ref<HTMLCanvasElement | null>(null)
-const hud = ref<HudState>({ score: 0, lives: 3, level: 1 })
-const status = ref<GameStatus>('idle')
-
-let game: ArkanoidGame | null = null
-
-onMounted(() => {
-  if (!canvasRef.value) return
-  game = new ArkanoidGame(canvasRef.value, {
-    onHud: (next) => {
-      hud.value = next
-    },
-    onStatus: (next) => {
-      status.value = next
-    },
-  })
-})
-
-onBeforeUnmount(() => {
-  game?.destroy()
-  game = null
-})
-
-function handlePrimaryAction(): void {
-  game?.primaryAction()
-}
-</script>
-
 <template>
   <main class="shell">
     <header class="hud">
@@ -81,6 +48,39 @@ function handlePrimaryAction(): void {
     </p>
   </main>
 </template>
+
+<script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import type { GameStatus, HudState } from '@/games/arkanoid/interfaces/game'
+import { ArkanoidGame } from '@/games/arkanoid/game/engine'
+
+const canvasRef = ref<HTMLCanvasElement | null>(null)
+const hud = ref<HudState>({ score: 0, lives: 3, level: 1 })
+const status = ref<GameStatus>('idle')
+
+let game: ArkanoidGame | null = null
+
+onMounted(() => {
+  if (!canvasRef.value) return
+  game = new ArkanoidGame(canvasRef.value, {
+    onHud: (next) => {
+      hud.value = next
+    },
+    onStatus: (next) => {
+      status.value = next
+    },
+  })
+})
+
+onBeforeUnmount(() => {
+  game?.destroy()
+  game = null
+})
+
+function handlePrimaryAction(): void {
+  game?.primaryAction()
+}
+</script>
 
 <style scoped>
 .shell {

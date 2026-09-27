@@ -30,6 +30,15 @@ export interface Brick {
   alive: boolean
 }
 
+/** Response of a ball/brick collision: the axis to reflect on and the direction to travel afterwards. */
+export interface BrickCollision {
+  axis: 'x' | 'y'
+  /** Travel direction on x after the bounce (-1 or 1; 0 when axis is 'y'). */
+  signX: number
+  /** Travel direction on y after the bounce (-1 or 1; 0 when axis is 'x'). */
+  signY: number
+}
+
 export interface HudState {
   score: number
   lives: number

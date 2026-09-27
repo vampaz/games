@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Paddle } from '@/games/arkanoid/interfaces/game'
-import { bounceOffPaddle, createBall, launchBall, setBallSpeed } from './ball'
+import { bounceOffPaddle, createBall, launchBall } from './ball'
 
 function makePaddle(x = 400): Paddle {
   return { x, y: 564, width: 120, height: 14 }
@@ -48,29 +48,6 @@ describe('bounceOffPaddle', () => {
     bounceOffPaddle(ball, makePaddle())
 
     expect(Math.hypot(ball.velocity.x, ball.velocity.y)).toBeCloseTo(before)
-  })
-})
-
-describe('setBallSpeed', () => {
-  it('normalizes the velocity to the requested speed', () => {
-    const ball = createBall(0, 0)
-    ball.velocity.x = 100
-    ball.velocity.y = 100
-
-    setBallSpeed(ball, 360)
-
-    expect(Math.hypot(ball.velocity.x, ball.velocity.y)).toBeCloseTo(360)
-  })
-
-  it('keeps the direction of travel', () => {
-    const ball = createBall(0, 0)
-    ball.velocity.x = 100
-    ball.velocity.y = -100
-
-    setBallSpeed(ball, 200)
-
-    expect(ball.velocity.x).toBeGreaterThan(0)
-    expect(ball.velocity.y).toBeLessThan(0)
   })
 })
 

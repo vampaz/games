@@ -15,17 +15,6 @@ export function launchBall(ball: Ball, speed: number): void {
   ball.velocity.y = Math.sin(angle) * speed
 }
 
-export function setBallSpeed(ball: Ball, speed: number): void {
-  const current = Math.hypot(ball.velocity.x, ball.velocity.y)
-  if (current === 0) {
-    launchBall(ball, speed)
-    return
-  }
-  const scale = speed / current
-  ball.velocity.x *= scale
-  ball.velocity.y *= scale
-}
-
 export function bounceOffPaddle(ball: Ball, paddle: Paddle): void {
   const offset = (ball.position.x - paddle.x) / (paddle.width / 2)
   const clamped = Math.max(-1, Math.min(1, offset))
