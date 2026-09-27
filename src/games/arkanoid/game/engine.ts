@@ -1,4 +1,4 @@
-import type { Brick, GameCallbacks, GameStatus, Vec2 } from '@/interfaces/game'
+import type { Brick, GameCallbacks, GameStatus, Vec2 } from '@/games/arkanoid/interfaces/game'
 import {
   BALL_BASE_SPEED,
   BALL_LEVEL_SPEED_BONUS,

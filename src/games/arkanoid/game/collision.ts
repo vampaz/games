@@ -1,4 +1,4 @@
-import type { Ball, Brick } from '@/interfaces/game'
+import type { Ball, Brick } from '@/games/arkanoid/interfaces/game'
 
 export function circleHitsRect(ball: Ball, brick: Brick): boolean {
   const closestX = clamp(ball.position.x, brick.x, brick.x + brick.width)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Ball, Brick } from '@/interfaces/game'
+import type { Ball, Brick } from '@/games/arkanoid/interfaces/game'
 import { circleHitsRect, resolveBallBrick } from './collision'
 
 function makeBall(x: number, y: number): Ball {

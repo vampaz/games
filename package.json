@@ -1,5 +1,5 @@
 {
-  "name": "arkanoid-qwen3.8",
+  "name": "games",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,7 +12,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "vue": "^3.5.40"
+    "vue": "^3.5.40",
+    "vue-router": "^5.3.1"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Brick } from '@/interfaces/game'
+import type { Brick } from '@/games/arkanoid/interfaces/game'
 import { countAliveBricks, createBricks } from './bricks'
 
 function overlaps(a: Brick, b: Brick): boolean {

@@ -1,4 +1,4 @@
-import type { Brick } from '@/interfaces/game'
+import type { Brick } from '@/games/arkanoid/interfaces/game'
 import {
   BRICK_COLS,
   BRICK_GAP,

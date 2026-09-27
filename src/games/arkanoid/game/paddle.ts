@@ -1,4 +1,4 @@
-import type { Paddle } from '@/interfaces/game'
+import type { Paddle } from '@/games/arkanoid/interfaces/game'
 import { GAME_WIDTH, PADDLE_HEIGHT, PADDLE_WIDTH, PADDLE_Y } from './constants'
 
 export function createPaddle(): Paddle {

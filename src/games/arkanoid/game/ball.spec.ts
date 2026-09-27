@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Paddle } from '@/interfaces/game'
+import type { Paddle } from '@/games/arkanoid/interfaces/game'
 import { bounceOffPaddle, createBall, launchBall, setBallSpeed } from './ball'
 
 function makePaddle(x = 400): Paddle {

@@ -1,4 +1,4 @@
-import type { Ball, Paddle } from '@/interfaces/game'
+import type { Ball, Paddle } from '@/games/arkanoid/interfaces/game'
 import { BALL_BASE_SPEED, BALL_RADIUS, MAX_BOUNCE_ANGLE } from './constants'
 
 export function createBall(x: number, y: number): Ball {
