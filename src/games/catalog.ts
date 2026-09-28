@@ -13,4 +13,10 @@ export const games: GameEntry[] = [
     tagline: 'Two paddles. First to eleven.',
     load: () => import('@/games/pong/PongView.vue'),
   },
+  {
+    id: 'snake',
+    name: 'Snake',
+    tagline: 'Eat. Grow. Survive.',
+    load: () => import('@/games/snake/SnakeView.vue'),
+  },
 ]

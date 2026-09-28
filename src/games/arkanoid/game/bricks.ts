@@ -8,22 +8,26 @@ import {
   GAME_WIDTH,
 } from './constants'
 
-type BrickTypeCode = 'W' | 'R' | 'B' | 'G' | 'Y' | 'P'
+type BrickTypeCode = 'W' | 'R' | 'B' | 'G' | 'Y' | 'P' | 'S' | 'X'
 
 interface BrickType {
   hits: number
   points: number
   color: string
+  destructible: boolean
 }
 
-// Original Arkanoid mapping: color encodes durability and value.
+// Original Arkanoid mapping: every color breaks in one hit; silver takes
+// more hits on later rounds and gold never breaks.
 const BRICK_TYPES: Record<BrickTypeCode, BrickType> = {
-  W: { hits: 1, points: 10, color: '#e5e7eb' },
-  R: { hits: 2, points: 20, color: '#ef4444' },
-  B: { hits: 3, points: 40, color: '#3b82f6' },
-  G: { hits: 2, points: 60, color: '#22c55e' },
-  Y: { hits: 2, points: 80, color: '#eab308' },
-  P: { hits: 4, points: 100, color: '#a855f7' },
+  W: { hits: 1, points: 50, color: '#e5e7eb', destructible: true },
+  R: { hits: 1, points: 100, color: '#ef4444', destructible: true },
+  B: { hits: 1, points: 110, color: '#3b82f6', destructible: true },
+  G: { hits: 1, points: 90, color: '#22c55e', destructible: true },
+  Y: { hits: 1, points: 50, color: '#eab308', destructible: true },
+  P: { hits: 1, points: 120, color: '#a855f7', destructible: true },
+  S: { hits: 2, points: 50, color: '#c0c0c0', destructible: true },
+  X: { hits: 1, points: 0, color: '#c9a227', destructible: false },
 }
 
 // Hand-crafted layouts, 10 columns wide, rows top-down. `.` is empty.
@@ -39,7 +43,7 @@ const LEVELS: string[][] = [
   [
     '.PP.PP.PP.',
     '.RR.RR.RR.',
-    '.BB.BB.BB.',
+    '.BS.BS.BS.',
     '.YY.YY.YY.',
     '.GG.GG.GG.',
     '.WW.WW.WW.',
@@ -56,8 +60,8 @@ const LEVELS: string[][] = [
     '....PP....',
     '..RRRRRR..',
     '.RRBBBBRR.',
-    'RRBBWWBBRR',
-    'RRBBWWBBRR',
+    'RRBBXXBBRR',
+    'RRBBXXBBRR',
     '.RRBBBBRR.',
     '..RRRRRR..',
     '....PP....',
@@ -72,7 +76,7 @@ const LEVELS: string[][] = [
   ],
   [
     'PPPPPPPPPP',
-    'PYYYYYYYYP',
+    'PSYYYYYYSP',
     'PYGGGGGGYP',
     'PYGWWWWGYP',
     'PYGWWWWGYP',
@@ -99,13 +103,13 @@ const LEVELS: string[][] = [
     'WWWWWWWWWW',
   ],
   [
-    'PP....RRRR',
+    'XP....RRRR',
     'PP....RRRR',
     'PP....BBRR',
     'PPPPPPPPPP',
     'PP....BBRR',
     'PP....RRRR',
-    'PP....RRRR',
+    'XP....RRRR',
   ],
   [
     'PPPPPPPPPP',
@@ -133,7 +137,7 @@ const LEVELS: string[][] = [
   [
     'PPPPPPPPPP',
     'BRRBRRBRRB',
-    'RBRBRBRBRB',
+    'RBRBSRSBRB',
     'BRBRBRBRBR',
   ],
   [
@@ -146,26 +150,32 @@ const LEVELS: string[][] = [
 ]
 
 export function createBricks(level: number): Brick[] {
-  const layout = LEVELS[(Math.max(1, level) - 1) % LEVELS.length]
+  const normalizedLevel = Math.max(1, level)
+  const layout = LEVELS[(normalizedLevel - 1) % LEVELS.length]
   const brickWidth =
     (GAME_WIDTH - BRICK_SIDE_MARGIN * 2 - BRICK_GAP * (BRICK_COLS - 1)) / BRICK_COLS
   const bricks: Brick[] = []
 
   layout.forEach((rowString, row) => {
     for (let col = 0; col < rowString.length; col++) {
-      const type = BRICK_TYPES[rowString.charAt(col) as BrickTypeCode]
+      const code = rowString.charAt(col) as BrickTypeCode
+      const type = BRICK_TYPES[code]
       if (!type) continue
 
+      // Silver hardens on later rounds: 2 hits for rounds 1-8, +1 per 8 rounds.
+      const hits = code === 'S' ? 2 + Math.floor((normalizedLevel - 1) / 8) : type.hits
+      const points = code === 'S' ? 50 * normalizedLevel : type.points
       bricks.push({
         x: BRICK_SIDE_MARGIN + col * (brickWidth + BRICK_GAP),
         y: BRICK_TOP + row * (BRICK_HEIGHT + BRICK_GAP),
         width: brickWidth,
         height: BRICK_HEIGHT,
-        hitsLeft: type.hits,
-        maxHits: type.hits,
-        points: type.points,
+        hitsLeft: hits,
+        maxHits: hits,
+        points,
         color: type.color,
         alive: true,
+        destructible: type.destructible,
       })
     }
   })
@@ -173,8 +183,9 @@ export function createBricks(level: number): Brick[] {
   return bricks
 }
 
-export function countAliveBricks(bricks: Brick[]): number {
+/** Destructible bricks still standing; gold never needs clearing. */
+export function countRemainingBricks(bricks: Brick[]): number {
   let count = 0
-  for (const brick of bricks) if (brick.alive) count++
+  for (const brick of bricks) if (brick.alive && brick.destructible) count++
   return count
 }

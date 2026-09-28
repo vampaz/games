@@ -13,12 +13,14 @@ export const PADDLE_EDGE_GAP = 8
 export const BALL_SIZE = 12
 // The original ball crossed the field in about two seconds
 export const BALL_BASE_SPEED = 380
-// The original sped the ball up a little with every paddle hit
-export const BALL_SPEED_BONUS = 1.06
 export const BALL_MAX_SPEED = 950
 
-// Max deflection from horizontal when the ball strikes a paddle edge
-export const MAX_DEFLECTION = Math.PI / 3
+// The original sped up only twice per rally: the horizontal speed steps up
+// after the 4th consecutive volley and again after the 12th; a miss resets it.
+export const RALLY_FAST_HITS = 4
+export const RALLY_MAX_HITS = 12
+export const RALLY_FAST_MULT = 1.6
+export const RALLY_MAX_MULT = 2.1
 
 export const WIN_SCORE = 11
 // The ball waits in the center before each serve

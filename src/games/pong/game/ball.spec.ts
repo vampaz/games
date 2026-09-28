@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { advanceBall, bounceWalls, createBall, hitPaddle, launchBall } from './ball'
-import { PADDLE_HEIGHT, PADDLE_WIDTH } from './constants'
+import { advanceBall, bounceWalls, createBall, hitPaddle, launchBall, rallySpeed } from './ball'
+import { BALL_BASE_SPEED, PADDLE_HEIGHT, PADDLE_WIDTH } from './constants'
 import type { Paddle } from '@/games/pong/interfaces/game'
 
 function rightPaddle(x = 700, y = 300): Paddle {
@@ -83,6 +83,17 @@ describe('bounceWalls', () => {
   })
 })
 
+describe('rallySpeed', () => {
+  it('serves at base speed and steps up after the 4th and 12th volley', () => {
+    expect(rallySpeed(0)).toBeCloseTo(BALL_BASE_SPEED)
+    expect(rallySpeed(3)).toBeCloseTo(BALL_BASE_SPEED)
+    expect(rallySpeed(4)).toBeCloseTo(BALL_BASE_SPEED * 1.6)
+    expect(rallySpeed(11)).toBeCloseTo(BALL_BASE_SPEED * 1.6)
+    expect(rallySpeed(12)).toBeCloseTo(BALL_BASE_SPEED * 2.1)
+    expect(rallySpeed(100)).toBeCloseTo(BALL_BASE_SPEED * 2.1)
+  })
+})
+
 describe('hitPaddle', () => {
   it('deflects a ball whose edge crosses the paddle face', () => {
     const paddle = rightPaddle() // face at x = 695
@@ -90,37 +101,44 @@ describe('hitPaddle', () => {
     ball.velocity = { x: 380, y: 0 }
 
     advanceBall(ball, 12 / 380) // lands at x = 700, leading edge 706: crossed the face
-    expect(hitPaddle(ball, paddle, 1)).toBe(true)
+    expect(hitPaddle(ball, paddle, 1, 380)).toBe(true)
 
-    // Snapped just outside the face, heading left at the sped-up speed
+    // Snapped just outside the face, heading back flat at the rally speed
     expect(ball.position.x).toBeCloseTo(700 - 5 - 6 - 0.5)
-    expect(ball.velocity.x).toBeCloseTo(-380 * 1.06)
+    expect(ball.velocity.x).toBeCloseTo(-380)
     expect(ball.velocity.y).toBeCloseTo(0)
   })
 
-  it('steers the ball by where it strikes, steep at the edge', () => {
+  it('returns the middle zones flat', () => {
+    const paddle = rightPaddle()
+    const ball = createBall(688, 300 + PADDLE_HEIGHT / 8, 12)
+    ball.velocity = { x: 380, y: 0 }
+
+    advanceBall(ball, 12 / 380) // crosses the face in the lower-middle zone
+    expect(hitPaddle(ball, paddle, 1, 380)).toBe(true)
+    expect(ball.velocity.y).toBeCloseTo(0)
+  })
+
+  it('sends the outer zones off at a fixed steep angle', () => {
     const paddle = rightPaddle()
     const ball = createBall(688, 300 + PADDLE_HEIGHT / 2, 12)
     ball.velocity = { x: 380, y: 0 }
 
     advanceBall(ball, 12 / 380) // crosses the face at the paddle's bottom edge
-    ball.velocity = { x: 380, y: 100 }
+    expect(hitPaddle(ball, paddle, 1, 380)).toBe(true)
 
-    expect(hitPaddle(ball, paddle, 1)).toBe(true)
-
-    const speed = Math.hypot(ball.velocity.x, ball.velocity.y)
-    expect(ball.velocity.y / speed).toBeCloseTo(Math.sin(Math.PI / 3))
-    expect(ball.velocity.x / speed).toBeCloseTo(Math.cos(Math.PI / 3) * -1)
+    expect(ball.velocity.x).toBeCloseTo(-380)
+    expect(ball.velocity.y).toBeCloseTo(380 * 1.1)
   })
 
-  it('speeds the ball up, capped at the maximum', () => {
+  it('leaves at the given rally speed', () => {
     const paddle = rightPaddle()
     const ball = createBall(688, 300, 12)
-    ball.velocity = { x: 1000, y: 0 }
+    ball.velocity = { x: 380, y: 0 }
 
-    advanceBall(ball, 12 / 1000) // crosses the face
-    expect(hitPaddle(ball, paddle, 1)).toBe(true)
-    expect(Math.hypot(ball.velocity.x, ball.velocity.y)).toBeCloseTo(950)
+    advanceBall(ball, 12 / 380) // crosses the face
+    expect(hitPaddle(ball, paddle, 1, 608)).toBe(true)
+    expect(ball.velocity.x).toBeCloseTo(-608)
   })
 
   it('deflects a ball that would tunnel past the paddle in one frame', () => {
@@ -129,7 +147,7 @@ describe('hitPaddle', () => {
     ball.velocity = { x: 950, y: 0 }
 
     advanceBall(ball, 1 / 30) // 31.7px step lands the ball fully behind the paddle
-    expect(hitPaddle(ball, paddle, 1)).toBe(true)
+    expect(hitPaddle(ball, paddle, 1, 950)).toBe(true)
     expect(ball.position.x).toBeLessThan(695) // snapped back outside the face
   })
 
@@ -138,7 +156,7 @@ describe('hitPaddle', () => {
     const ball = createBall(700, 300, 12)
     ball.velocity = { x: -380, y: 0 }
 
-    expect(hitPaddle(ball, paddle, 1)).toBe(false)
+    expect(hitPaddle(ball, paddle, 1, 380)).toBe(false)
     expect(ball.velocity.x).toBe(-380)
   })
 
@@ -147,7 +165,7 @@ describe('hitPaddle', () => {
     const ball = createBall(700, 300, 12)
     ball.velocity = { x: 380, y: 0 }
 
-    expect(hitPaddle(ball, paddle, 1)).toBe(false)
+    expect(hitPaddle(ball, paddle, 1, 380)).toBe(false)
     expect(ball.velocity).toEqual({ x: 380, y: 0 })
   })
 
@@ -156,6 +174,6 @@ describe('hitPaddle', () => {
     const ball = createBall(720, 300, 12) // fully behind the paddle face
     ball.velocity = { x: 380, y: 0 }
 
-    expect(hitPaddle(ball, paddle, 1)).toBe(false)
+    expect(hitPaddle(ball, paddle, 1, 380)).toBe(false)
   })
 })

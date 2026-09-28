@@ -1,6 +1,5 @@
-import type { GameCallbacks, GameStatus, Paddle, Scores } from '@/games/pong/interfaces/game'
+import type { Ball, GameCallbacks, GameStatus, Paddle, Scores } from '@/games/pong/interfaces/game'
 import {
-  BALL_BASE_SPEED,
   BALL_SIZE,
   DASH_OFF,
   DASH_ON,
@@ -18,7 +17,7 @@ import {
   SCORE_TOP,
   SERVE_DELAY,
 } from './constants'
-import { advanceBall, bounceWalls, createBall, hitPaddle, launchBall } from './ball'
+import { advanceBall, bounceWalls, createBall, hitPaddle, launchBall, rallySpeed } from './ball'
 import { createPaddle, movePaddle } from './paddle'
 import { aiPaddleStep } from './ai'
 import { pointFor, winningSide } from './scoring'
@@ -60,7 +59,7 @@ export class PongGame {
   private keys = { up: false, down: false }
   private serveTimer = 0
   private serveDirection: 1 | -1 = 1
-  private ballSpeed = BALL_BASE_SPEED
+  private rallyHits = 0
   private pausedFrom: 'serving' | 'playing' = 'playing'
 
   private sound = new PongSound()
@@ -109,7 +108,6 @@ export class PongGame {
 
   private startMatch(): void {
     this.scores = { player: 0, ai: 0 }
-    this.ballSpeed = BALL_BASE_SPEED
     this.playerPaddle.y = GAME_HEIGHT / 2
     this.aiPaddle.y = GAME_HEIGHT / 2
     this.beginServe(Math.random() < 0.5 ? 1 : -1)
@@ -166,7 +164,7 @@ export class PongGame {
       this.serveTimer += dt
       movePaddle(this.aiPaddle, aiPaddleStep(this.ball, this.aiPaddle, dt))
       if (this.serveTimer >= SERVE_DELAY) {
-        launchBall(this.ball, this.serveDirection, this.ballSpeed)
+        launchBall(this.ball, this.serveDirection, rallySpeed(0))
         this.setStatus('playing')
       }
       return
@@ -178,8 +176,8 @@ export class PongGame {
     movePaddle(this.aiPaddle, aiPaddleStep(this.ball, this.aiPaddle, dt))
 
     if (bounceWalls(this.ball)) this.sound.wallHit()
-    if (hitPaddle(this.ball, this.aiPaddle, 1)) this.sound.paddleHit()
-    if (hitPaddle(this.ball, this.playerPaddle, -1)) this.sound.paddleHit()
+    if (this.strikePaddle(this.ball, this.aiPaddle, 1)) this.sound.paddleHit()
+    if (this.strikePaddle(this.ball, this.playerPaddle, -1)) this.sound.paddleHit()
 
     const half = this.ball.size / 2
     if (this.ball.position.x + half < 0) {
@@ -192,7 +190,6 @@ export class PongGame {
   private awardPoint(side: 'player' | 'ai'): void {
     pointFor(this.scores, side)
     this.sound.score()
-    this.ballSpeed = BALL_BASE_SPEED // The original reset the ball speed on every serve
     this.emitHud()
 
     if (winningSide(this.scores)) {
@@ -207,7 +204,15 @@ export class PongGame {
     this.ball = createBall(GAME_WIDTH / 2, GAME_HEIGHT / 2, BALL_SIZE)
     this.serveDirection = direction
     this.serveTimer = 0
+    this.rallyHits = 0 // missing the ball resets the speed, like the original
     this.setStatus('serving')
+  }
+
+  /** A paddle return at the current rally speed; consecutive hits step it up. */
+  private strikePaddle(ball: Ball, paddle: Paddle, travel: 1 | -1): boolean {
+    const struck = hitPaddle(ball, paddle, travel, rallySpeed(this.rallyHits + 1))
+    if (struck) this.rallyHits += 1
+    return struck
   }
 
   private emitHud(): void {

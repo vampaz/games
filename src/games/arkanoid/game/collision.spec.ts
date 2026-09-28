@@ -8,7 +8,7 @@ function makeBall(x: number, y: number): Ball {
 }
 
 function makeBrick(): Brick {
-  return { x: 100, y: 100, width: 60, height: 20, hitsLeft: 1, maxHits: 1, points: 10, color: '#fff', alive: true }
+  return { x: 100, y: 100, width: 60, height: 20, hitsLeft: 1, maxHits: 1, points: 10, color: '#fff', alive: true, destructible: true }
 }
 
 describe('circleHitsRect', () => {

@@ -6,12 +6,15 @@ A collection of small browser games built with Vue 3, TypeScript and Vite. The h
 
 - **Arkanoid** (`/arkanoid`) — Classic brick breaker. The game runs on an HTML canvas; Vue handles the HUD and state overlays.
 - **Pong** (`/pong`) — The 1972 arcade original: black field, white blocks, dashed center line, first to eleven.
+- **Snake** (`/snake`) — Grid classic: eat, grow, don't bite yourself. Speeds up with every food; best score persists.
 
 ### Arkanoid gameplay
 
 - Clear all bricks to advance to the next level (the ball gets faster each level)
 - 14 hand-crafted level layouts, repeating after 14
-- Brick color encodes durability and value: white 1 hit / 10 pts, red 2 / 20, blue 3 / 40, green 2 / 60, yellow 2 / 80, purple 4 / 100
+- Brick color encodes value (1986 originals): white/yellow 50, green 90, red 100, blue 110, purple 120 — all break in one hit
+- Silver bricks take 2 hits on rounds 1–8 (+1 per 8 rounds) and score 50×level; gold bricks are indestructible and don't need clearing
+- Bonus ships at 20k and 60k points, then every 60k
 - 3 lives — drop the ball and you lose one
 
 ### Arkanoid controls
@@ -25,9 +28,9 @@ A collection of small browser games built with Vue 3, TypeScript and Vite. The h
 ### Pong gameplay
 
 - First to eleven points wins; the ball resets to center and serves toward the side that just lost
-- The ball speeds up a little with every paddle hit (and resets to normal speed on each serve), like the original
-- Where the ball strikes the paddle steers its angle: center hits fly flat, edge hits leave steep
-- You play the left paddle against the machine; the original beeps play on every hit and point
+- The ball steps up speed after the 4th and 12th consecutive volley (and resets on a miss), like the original
+- The paddle has 8 zones with fixed return angles: flat in the middle, steep at the edges
+- You play the left paddle against the machine; the original square-wave beeps play on every hit and point
 - A pause key is the only modern addition
 
 ### Pong controls
@@ -36,6 +39,22 @@ A collection of small browser games built with Vue 3, TypeScript and Vite. The h
 | --- | --- |
 | W / S or ↑ / ↓ | Move paddle |
 | Mouse / touch drag | Move paddle |
+| Space / Enter / click | Start, continue |
+| P / Escape | Pause |
+
+### Snake gameplay
+
+- 20×15 grid like the Nokia 6110; every food grows the snake by one for one point
+- Speed steps up at score thresholds; walls and self contact kill (one grace beat to turn away from walls)
+- Moving into the vacating tail is safe
+- Best score persists in `localStorage`
+
+### Snake controls
+
+| Input | Action |
+| --- | --- |
+| Arrows / WASD / 2-4-6-8 | Steer (number pad, like the original) |
+| Swipe | Steer on touch |
 | Space / Enter / click | Start, continue |
 | P / Escape | Pause |
 

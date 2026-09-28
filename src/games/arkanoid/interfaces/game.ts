@@ -28,6 +28,8 @@ export interface Brick {
   points: number
   color: string
   alive: boolean
+  /** Gold bricks are indestructible and don't count toward clearing the level. */
+  destructible: boolean
 }
 
 /** Response of a ball/brick collision: the axis to reflect on and the direction to travel afterwards. */

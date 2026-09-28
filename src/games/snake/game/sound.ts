@@ -1,15 +1,14 @@
 /**
- * The original Pong's beeps, synthesized with WebAudio so no assets are
- * needed. Frequencies and durations follow Caprani's 2014 measurements of the
- * arcade hardware: wall 226 Hz / 16 ms, paddle 459 Hz / 96 ms, score a single
- * 490 Hz / 257 ms tone. All three are square waves gated from the sync clock.
+ * The Nokia Snake's monotone beeps, synthesized with WebAudio so no assets
+ * are needed: a short blip per food and a low tone on game over. Exact Nokia
+ * pitches are undocumented; these are a homage approximation.
  */
-export class PongSound {
+export class SnakeSound {
   private ctx: AudioContext | null = null
 
   /**
    * Browsers only allow audio after a user gesture; call from the first
-   * input so beeps are ready when the ball starts moving.
+   * input so beeps are ready when the snake starts moving.
    */
   unlock(): void {
     if (!this.ctx) this.ctx = new AudioContext()
@@ -21,30 +20,26 @@ export class PongSound {
     this.ctx = null
   }
 
-  private beep(frequency: number, duration: number, delay = 0): void {
+  private beep(frequency: number, duration: number): void {
     if (!this.ctx || this.ctx.state !== 'running') return
 
-    const time = this.ctx.currentTime + delay
+    const time = this.ctx.currentTime
     const osc = this.ctx.createOscillator()
     const gain = this.ctx.createGain()
     osc.type = 'square'
     osc.frequency.value = frequency
-    gain.gain.setValueAtTime(0.08, time)
+    gain.gain.setValueAtTime(0.06, time)
     gain.gain.exponentialRampToValueAtTime(0.001, time + duration)
     osc.connect(gain).connect(this.ctx.destination)
     osc.start(time)
     osc.stop(time + duration)
   }
 
-  paddleHit(): void {
-    this.beep(459, 0.096)
+  eat(): void {
+    this.beep(1200, 0.07)
   }
 
-  wallHit(): void {
-    this.beep(226, 0.016)
-  }
-
-  score(): void {
-    this.beep(490, 0.257)
+  gameOver(): void {
+    this.beep(400, 0.25)
   }
 }

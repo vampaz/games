@@ -21,3 +21,6 @@ export const BRICK_SIDE_MARGIN = 24
 export const BRICK_HEIGHT = 22
 
 export const START_LIVES = 3
+
+// The original awards bonus ships at 20k and 60k, then every 60k after.
+export const BONUS_LIFE_SCORES = [20000, 60000, 120000, 180000, 240000, 300000]

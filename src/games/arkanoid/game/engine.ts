@@ -4,6 +4,7 @@ import {
   BALL_LEVEL_SPEED_BONUS,
   BALL_MAX_SPEED,
   BALL_RADIUS,
+  BONUS_LIFE_SCORES,
   GAME_HEIGHT,
   GAME_WIDTH,
   PADDLE_HEIGHT,
@@ -12,7 +13,7 @@ import {
   START_LIVES,
 } from './constants'
 import { bounceOffPaddle, createBall, launchBall } from './ball'
-import { countAliveBricks, createBricks } from './bricks'
+import { countRemainingBricks, createBricks } from './bricks'
 import { resolveBallBrick } from './collision'
 import { createPaddle, movePaddle, setPaddleX } from './paddle'
 
@@ -22,6 +23,15 @@ const MAX_DPR = 2
 const TRAIL_LENGTH = 10
 // Clear area around pre-rendered glows so the shadow blur is never clipped
 const GLOW_MARGIN = 32
+
+/** Bonus lives earned for a score under the original's thresholds. */
+export function bonusesForScore(score: number): number {
+  let count = 0
+  for (const threshold of BONUS_LIFE_SCORES) {
+    if (score >= threshold) count += 1
+  }
+  return count
+}
 
 export class ArkanoidGame {
   status: GameStatus = 'idle'
@@ -34,11 +44,12 @@ export class ArkanoidGame {
   private paddle = createPaddle()
   private ball = createBall(GAME_WIDTH / 2, PADDLE_Y - PADDLE_HEIGHT / 2 - BALL_RADIUS)
   private bricks: Brick[] = []
-  private aliveBricks = 0
+  private remainingBricks = 0
   private trail: Vec2[]
   private trailCursor = 0
   private trailLength = 0
   private score = 0
+  private bonusesAwarded = 0
   private lives = START_LIVES
   private level = 1
   private keys = { left: false, right: false }
@@ -82,7 +93,7 @@ export class ArkanoidGame {
 
     this.renderGridLayer()
     this.bricks = createBricks(this.level)
-    this.aliveBricks = countAliveBricks(this.bricks)
+    this.remainingBricks = countRemainingBricks(this.bricks)
     this.renderBrickLayer()
 
     this.render()
@@ -106,6 +117,7 @@ export class ArkanoidGame {
 
   private resetGame(): void {
     this.score = 0
+    this.bonusesAwarded = 0
     this.lives = START_LIVES
     this.level = 1
     this.loadLevel()
@@ -245,6 +257,7 @@ export class ArkanoidGame {
   }
 
   private damageBrick(brick: Brick): void {
+    if (!brick.destructible) return // gold bounces the ball but never breaks
     brick.hitsLeft -= 1
     if (brick.hitsLeft > 0) {
       this.renderBrickLayer()
@@ -252,12 +265,21 @@ export class ArkanoidGame {
     }
 
     brick.alive = false
-    this.aliveBricks -= 1
+    this.remainingBricks -= 1
     this.score += brick.points
+    this.awardBonusLives()
     this.renderBrickLayer()
     this.emitHud()
 
-    if (this.aliveBricks === 0) this.setStatus('levelcomplete')
+    if (this.remainingBricks === 0) this.setStatus('levelcomplete')
+  }
+
+  private awardBonusLives(): void {
+    const earned = bonusesForScore(this.score)
+    while (this.bonusesAwarded < earned) {
+      this.lives += 1
+      this.bonusesAwarded += 1
+    }
   }
 
   private loseLife(): void {
@@ -275,7 +297,7 @@ export class ArkanoidGame {
 
   private loadLevel(): void {
     this.bricks = createBricks(this.level)
-    this.aliveBricks = countAliveBricks(this.bricks)
+    this.remainingBricks = countRemainingBricks(this.bricks)
     this.renderBrickLayer()
   }
 
